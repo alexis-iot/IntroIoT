@@ -12,12 +12,12 @@ MAIN=test
 RM=rm -rf
 
 .c.o:
-        $(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+		$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(MAIN): $(OBJ)
-        $(CC) $(CCFLAGS) $(INCLUDES) -o $(MAIN) $(OBJ) $(LFLAGS) $(LIBS)
+		$(CC) $(CCFLAGS) $(INCLUDES) -o $(MAIN) $(OBJ) $(LFLAGS) $(LIBS)
 
 all: $(MAIN)
 
 clean:
-        $(RM) $(MAIN) *.o *~
+		$(RM) $(MAIN) *.o *~
