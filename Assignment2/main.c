@@ -5,6 +5,10 @@
 #define OK          0
 #define INIT_ERR    1
 #define REQ_ERR     2
+#define HTTP_POST   3
+#define HTTP_GET    4
+#define HTTP_PUT    5
+#define HTTP_DELETE 6
 
 int StartsWith(const char *a, const char *b) {
     if (strncmp(a, b, strlen(b)) == 0) return 1;
@@ -24,62 +28,7 @@ int CheckIfNumber(const char *a) {
     return isDigit;
 }
 
-int SendPost(const char *url, const char *postthis) {
-    CURL *curl;
-    CURLcode res;
-
-    curl = curl_easy_init();
-
-    if(curl) {
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postthis);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(postthis));
-
-        res = curl_easy_perform(curl);
-
-        if(res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                    curl_easy_strerror(res));
-            return REQ_ERR;
-        }
-
-        curl_easy_cleanup(curl);
-    } else {
-        return INIT_ERR;
-    }
-
-    return OK;
-}
-
-int SendPut(const char *url, const char *postthis) {
-    CURL *curl;
-    CURLcode res;
-
-    curl = curl_easy_init();
-
-    if(curl) {
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postthis);
-        res = curl_easy_perform(curl);
-
-        if(res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                    curl_easy_strerror(res));
-            return REQ_ERR;
-        }
-
-        curl_easy_cleanup(curl);
-    } else {
-        return INIT_ERR;
-    }
-
-    return OK;
-}
-
-int SendDelete(const char *url, const char *postthis) {
+int SendHttpVerb(const char *url, const char *postthis, int verb) {
     CURL *curl;
     CURLcode res;
 
@@ -88,34 +37,24 @@ int SendDelete(const char *url, const char *postthis) {
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
         curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postthis);
-        res = curl_easy_perform(curl);
 
-        if(res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                    curl_easy_strerror(res));
-            return REQ_ERR;
+        switch (verb) {
+            case HTTP_POST:
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postthis);
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(postthis));
+                break;
+            case HTTP_GET:
+                curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+                break;
+            case HTTP_PUT:
+                curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postthis);
+                break;
+            case HTTP_DELETE:
+                curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postthis);
+                break;
         }
-
-        curl_easy_cleanup(curl);
-    } else {
-        return INIT_ERR;
-    }
-
-    return OK;
-}
-
-int SendGet(const char *url) {
-    CURL *curl;
-    CURLcode res;
-
-    curl = curl_easy_init();
-
-    if (curl) {
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         res = curl_easy_perform(curl);
 
         if(res != CURLE_OK) {
@@ -181,10 +120,7 @@ int main(int argc, char *argv[]) {
                         }
                     }
 
-                    if (isPost)
-                        SendPost(argv[3], str);
-                    else
-                        SendPut(argv[3], str);
+                    SendHttpVerb(argv[3], str, isPost ? HTTP_POST : HTTP_PUT);
                 } else if (isDelete) {
                     if (argc > 5) {
                         printf("Too much arguments after url\n");
@@ -196,14 +132,14 @@ int main(int argc, char *argv[]) {
                         return OK;
                     }
 
-                    SendDelete(argv[3], argv[4]);
+                    SendHttpVerb(argv[3], argv[4], HTTP_DELETE);
                 } else if (isGet) {
                     if (argc > 4) {
                         printf("Too much arguments after url\n");
                         return OK;
                     }
 
-                    SendGet(argv[3]);
+                    SendHttpVerb(argv[3], NULL, HTTP_GET);
                 }
             } else {
                 if (argc <= 3) {
