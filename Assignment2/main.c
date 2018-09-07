@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
                         }
                     }
 
-                    SendHttpVerb(argv[3], str, isPost ? HTTP_POST : HTTP_PUT);
+                    return SendHttpVerb(argv[3], str, isPost ? HTTP_POST : HTTP_PUT);
                 } else if (isDelete) {
                     if (argc > 5) {
                         printf("Too much arguments after url\n");
@@ -132,14 +132,14 @@ int main(int argc, char *argv[]) {
                         return OK;
                     }
 
-                    SendHttpVerb(argv[3], argv[4], HTTP_DELETE);
+                    return SendHttpVerb(argv[3], argv[4], HTTP_DELETE);
                 } else if (isGet) {
                     if (argc > 4) {
                         printf("Too much arguments after url\n");
                         return OK;
                     }
 
-                    SendHttpVerb(argv[3], NULL, HTTP_GET);
+                    return SendHttpVerb(argv[3], NULL, HTTP_GET);
                 }
             } else {
                 if (argc <= 3) {
