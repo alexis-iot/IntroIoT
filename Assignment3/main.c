@@ -36,13 +36,12 @@ static void _signal_handler(const int signal) {
 }
 
 static void _do_work(void) {
-    for (int i = 0; true; ++i) {
-        time_t t = time(NULL);
-        struct tm tm = *localtime(&t);
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
 
-        syslog(LOG_INFO, "Date-Time Now: %d-%d-%d %d:%d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-        sleep(1);
-    }
+    syslog(LOG_INFO, "Date-Time Now: %d-%d-%d %d:%d:%d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
+           tm.tm_min, tm.tm_sec);
+    sleep(1);
 }
 
 int main() {
@@ -91,7 +90,6 @@ int main() {
     signal(SIGTERM, _signal_handler);
     signal(SIGHUP, _signal_handler);
 
-    _do_work();
-
-    return OK;
+    while (true)
+        _do_work();
 }
